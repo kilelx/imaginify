@@ -42,7 +42,7 @@ function Sidebar() {
                         })}
                     </ul>
 
-                    {/* Display the last three links, to the "administration part*/}
+                    {/* Display the last three links, to the "administration part" */}
                     <ul>
                         {navLinks.slice(6).map(link => {
                             const isActive = link.route === pathname
