@@ -1,5 +1,6 @@
 import { Schema, model, models } from "mongoose";
 
+// Schema for Stripe transaction
 const TransactionSchema = new Schema({
   createdAt: {
     type: Date,
