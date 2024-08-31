@@ -137,3 +137,5 @@ declare type CreateUserParams = {
     hasDownload?: boolean;
     setIsTransforming?: React.Dispatch<React.SetStateAction<boolean>>;
   };
+
+  declare module 'qs';
