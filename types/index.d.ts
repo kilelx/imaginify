@@ -1,5 +1,4 @@
 // file.d.ts -> means that the file can be exported as a module
-/* eslint-disable no-unused-vars */
 
 // ====== USER PARAMS
 declare type CreateUserParams = {
