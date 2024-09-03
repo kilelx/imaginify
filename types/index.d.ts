@@ -117,7 +117,7 @@ declare type CreateUserParams = {
     params: { id: string; type: TransformationTypeKey };
     searchParams: { [key: string]: string | string[] | undefined };
   };
-  
+
   declare type TransformationFormProps = {
     action: "Add" | "Update";
     userId: string;
@@ -126,7 +126,7 @@ declare type CreateUserParams = {
     data?: IImage | null;
     config?: Transformations | null;
   };
-  
+
   declare type TransformedImageProps = {
     image: any;
     type: string;
