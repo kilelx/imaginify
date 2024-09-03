@@ -12,7 +12,7 @@ export async function createUser(user: CreateUserParams) {
         // Connect to the database, as we are in a serverless architecture
         await connectToDatabase();
 
-        // Create a new user : we use the .creat() method on the User model, passing the user params as props coming from front-end
+        // Create a new user : we use the .create() method on the User model, passing the user params as props coming from front-end
         const newUser = await User.create(user);
 
         return JSON.parse(JSON.stringify(newUser))

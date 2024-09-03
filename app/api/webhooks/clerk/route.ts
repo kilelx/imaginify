@@ -57,12 +57,13 @@ export async function POST(req: Request) {
   const { id } = evt.data;
   const eventType = evt.type;
 
-  // This was given by Clerk doc. Now, we add
-
   // CREATE
   if (eventType === "user.created") {
+
+    // All data is saved in evt.data
     const { id, email_addresses, image_url, first_name, last_name, username } = evt.data;
 
+    // We extract the data, and send it to a new user object
     const user = {
       clerkId: id,
       email: email_addresses[0].email_address,
@@ -72,9 +73,12 @@ export async function POST(req: Request) {
       photo: image_url,
     };
 
+    // We call the server action createUser, based with the data
+    // The server action create a new user in the database
     const newUser = await createUser(user);
 
     // Set public metadata
+    // We merge the Clerk id with our own user id
     if (newUser) {
       await clerkClient.users.updateUserMetadata(id, {
         publicMetadata: {
