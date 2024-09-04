@@ -64,7 +64,19 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
 
   // onChangeField: function with a parameter (value) that returns nothing
   const onSelectFieldHandler = (value: string, onChangeField: (value: string) => void) => {
+    // Get the image size
+    const imageSize = aspectRatioOptions[value as AspectRatioKey]
 
+    setImage((prevState: any) => ({
+      ...prevState,
+      aspectRatio: imageSize.aspectRatio,
+      width: imageSize.width,
+      height: imageSize.height,
+    }))
+
+    setNewTransformation(transformationType.config);
+
+    return onChangeField(value);
   }
 
   const onInputChangeHandler = (fieldName: string, value: string, type: string, onChangeField:(value: string) => void) => {
@@ -104,7 +116,7 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
                     {Object.keys(aspectRatioOptions).map((key) => (
                       <SelectItem
                         key={key}
-                        value="key"
+                        value={key}
                         className="select-item"
                       >
                         {/* The compiler will assume it's a type AspectRatioKey */}
