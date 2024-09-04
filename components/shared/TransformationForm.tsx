@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { aspectRatioOptions, defaultValues, transformationTypes } from "@/constants";
+import { aspectRatioOptions, creditFee, defaultValues, transformationTypes } from "@/constants";
 import {
     Select,
     SelectContent,
@@ -15,9 +15,10 @@ import {
   } from "@/components/ui/select"
 
 import { CustomField } from "./CustomField";
-import { useState } from "react";
-import { AspectRatioKey, debounce } from "@/lib/utils";
+import { useState, useTransition } from "react";
+import { AspectRatioKey, debounce, deepMergeObjects } from "@/lib/utils";
 import { Button } from "../ui/button";
+import { updateCredits } from "@/lib/actions/user.actions";
 
 export const formSchema = z.object({
   title: z.string(),
@@ -36,6 +37,7 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isTransforming, setIsTransforming] = useState(false);
     const [transformationConfig, setTransformationConfig] = useState(config);
+    const [isPending, startTransition] = useTransition();
 
   // If we have already filled the data before
   const initialValues =
@@ -97,8 +99,20 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
     }, 1000)
   }
 
+  // TODO: return to updateCredits
   const onTransformHandler = () => {
+    setIsTransforming(true);
 
+    setTransformationConfig(
+      // Merge all the keys of the object to ensure they endup in a new object
+      deepMergeObjects(newTransformation, transformationConfig)
+    )
+
+    setNewTransformation(null);
+
+    startTransition(async () => {
+      // await updateCredits(userId, creditFee)
+    })
   }
 
   return (
