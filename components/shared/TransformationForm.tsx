@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { defaultValues, transformationTypes } from "@/constants";
+import { aspectRatioOptions, defaultValues, transformationTypes } from "@/constants";
 import {
     Select,
     SelectContent,
@@ -15,6 +15,8 @@ import {
   } from "@/components/ui/select"
 
 import { CustomField } from "./CustomField";
+import { useState } from "react";
+import { AspectRatioKey } from "@/lib/utils";
 
 export const formSchema = z.object({
   title: z.string(),
@@ -27,7 +29,9 @@ export const formSchema = z.object({
 function TransformationForm({ action, data = null, userId, type, creditBalance }: TransformationFormProps) {
 
     const transformationType = transformationTypes[type];
-    console.log(transformationType);
+    const [image, setImage] = useState(data)
+    // Keep track of transformation, type Transformations or null
+    const [newTransformation, setNewTransformation] = useState<Transformations | null>(null)
 
   // If we have already filled the data before
   const initialValues =
@@ -54,6 +58,11 @@ function TransformationForm({ action, data = null, userId, type, creditBalance }
     console.log(values);
   }
 
+  // onChangeField: function with a parameter (value) that returns nothing
+  const onSelectFieldHandler = (value: string, onChangeField: (value: string) => void) => {
+
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -67,20 +76,46 @@ function TransformationForm({ action, data = null, userId, type, creditBalance }
         />
         {type === 'fill' &&
             <CustomField
-                render={({field}) => (
-                    <Select>
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Theme" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="light">Light</SelectItem>
-                          <SelectItem value="dark">Dark</SelectItem>
-                          <SelectItem value="system">System</SelectItem>
-                        </SelectContent>
-                    </Select>
-                )}
+              control={form.control}
+              name="aspectRatio"
+              formLabel="aspectRatio"
+              className="w-full"
+              render={({field}) => (
+                <Select
+                  onValueChange={(value) => onSelectFieldHandler(value, field.onChange)}
+                >
+                  <SelectTrigger className="select-field">
+                    <SelectValue placeholder="Select size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* Get the aspectRatioOptions in constants */}
+                    {Object.keys(aspectRatioOptions).map((key) => (
+                      <SelectItem
+                        key={key}
+                        value="key"
+                        className="select-item"
+                      >
+                        {/* The compiler will assume it's a type AspectRatioKey */}
+                        {aspectRatioOptions[key as AspectRatioKey].label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             />
         }
+
+        {(type === 'remove' || type === 'recolor') && (
+          <div className="prompt-field">
+            <CustomField
+              control={form.control}
+              name="prompt"
+              formLabel={
+                type==='remove' ? 'Object to remove' : 'Object to recolor'
+              }
+            />
+          </div>
+        )}
       </form>
     </Form>
   );
