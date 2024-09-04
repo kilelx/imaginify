@@ -16,7 +16,7 @@ import {
 
 import { CustomField } from "./CustomField";
 import { useState } from "react";
-import { AspectRatioKey } from "@/lib/utils";
+import { AspectRatioKey, debounce } from "@/lib/utils";
 import { Button } from "../ui/button";
 
 export const formSchema = z.object({
@@ -80,7 +80,21 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
   }
 
   const onInputChangeHandler = (fieldName: string, value: string, type: string, onChangeField:(value: string) => void) => {
-    console.log(fieldName);
+    // debounce() is imported from /utils
+    //I It waits 1000ms, and then submit the new value
+    debounce(() => {
+      setNewTransformation((prevState: any) => ({
+        ...prevState,
+        // Go to a specific type (recolor, remove...)
+        [type]: {
+          // Spread all the properties
+          ...prevState?.[type],
+          // We use this expression to get a dynamic key
+          [fieldName === 'prompt' ? 'prompt' : 'to']: value
+        }
+      }))
+      return onChangeField(value)
+    }, 1000)
   }
 
   const onTransformHandler = () => {
