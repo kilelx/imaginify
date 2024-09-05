@@ -1,5 +1,7 @@
 import { useToast } from "@/hooks/use-toast"
-import { CldUploadWidget } from "next-cloudinary"
+import { dataUrl, getImageSize } from "@/lib/utils";
+import { CldImage, CldUploadWidget } from "next-cloudinary"
+import { PlaceholderValue } from "next/dist/shared/lib/get-img-props";
 import Image from "next/image";
 
 type MediaUploaderProps = {
@@ -58,7 +60,16 @@ const MediaUploader = ({
                     {/* If there is apublicId, it means that there is an uploaded image */}
                     {publicId ? (
                         <>
-                        Here is the image
+                        <div className="cursor-pointer overflow-hidden rounded-[10px]">
+                            <CldImage
+                                width={getImageSize(type, image, "width")}
+                                height={getImageSize(type, image, "height")}
+                                src={publicId}
+                                alt="image"
+                                sizes={"(max-width: 767px) 100vw, 50vw"}
+                                placeholder={dataUrl as PlaceholderValue}
+                            />
+                        </div>
                         </>
                     ) : (
                         <div
