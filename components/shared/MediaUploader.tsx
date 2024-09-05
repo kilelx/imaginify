@@ -22,6 +22,7 @@ const MediaUploader = ({
 }: MediaUploaderProps) => {
     const {toast} = useToast()
 
+    // handling success upload
     const onUploadSuccessHandler = (result: any) => {
         setImage((prevState: any) => ({
             ...prevState,
