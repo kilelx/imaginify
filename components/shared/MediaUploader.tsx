@@ -24,6 +24,7 @@ const MediaUploader = ({
 
     // handling success upload
     const onUploadSuccessHandler = (result: any) => {
+        // We set the image as a state
         setImage((prevState: any) => ({
             ...prevState,
             publicId: result?.info?.public_id,
@@ -31,6 +32,10 @@ const MediaUploader = ({
             height: result?.info?.height,
             secureUrl: result?.info?.secure_url
         }))
+
+        // Change the publicId to display the image
+        onValueChange(result?.info?.public_id)
+
         toast({
             title: 'Image uploaded succesfully',
             description: 'One credit was deducted from your account',
