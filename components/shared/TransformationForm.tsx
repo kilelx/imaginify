@@ -224,8 +224,8 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
             image={image}
             type={type}
             title={form.getValues().title}
-            isTranforming={isTransforming}
-            setIsTranforming={setIsTransforming}
+            isTransforming={isTransforming}
+            setIsTransforming={setIsTransforming}
             transformationConfig={transformationConfig}
           />
         </div>

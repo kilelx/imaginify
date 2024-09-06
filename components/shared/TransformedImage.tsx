@@ -1,4 +1,8 @@
 import Image from "next/image"
+import { dataUrl, getImageSize, debounce } from "@/lib/utils";
+import { CldImage } from "next-cloudinary"
+import { PlaceholderValue } from "next/dist/shared/lib/get-img-props";
+
 
 const TransformedImage = ({image, type, title, transformationConfig, isTransforming, setIsTransforming, hasDownload=false}: TransformedImageProps) => {
 
@@ -28,7 +32,37 @@ const TransformedImage = ({image, type, title, transformationConfig, isTransform
 
         {image?.publicId && transformationConfig ? (
             <div className="relative">
+                <CldImage
+                    width={getImageSize(type, image, "width")}
+                    height={getImageSize(type, image, "height")}
+                    src={image?.publicId}
+                    alt={image.title}
+                    sizes={"(max-width: 767px) 100vw, 50vw"}
+                    placeholder={dataUrl as PlaceholderValue}
+                    className="transformed-image"
+                    onLoad={() => {
+                        // Check if setIsTransforming, and if it's the case, pass it to false
+                        setIsTransforming && setIsTransforming(false)
+                    }}
+                    onError={() => {
+                        debounce(() => {
+                            setIsTransforming && setIsTransforming(false)
+                        }, 8000)
+                    }}
+                    // Extend all props of transformationConfig to cldImage
+                    {...transformationConfig}
+                />
 
+                {isTransforming && (
+                    <div className="transforminng-loader">
+                        <Image
+                            src="/assets/icons/spinner.svg"
+                            width={50}
+                            height={50}
+                            alt="Transforming"
+                        />
+                    </div>
+                )}
             </div>
         ): (
             <div className="transformed-placeholder">
