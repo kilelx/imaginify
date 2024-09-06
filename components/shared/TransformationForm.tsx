@@ -101,7 +101,7 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
     }, 1000)
   }
 
-  // TODO: return to updateCredits
+  // TODO: update creditfee to something else
   const onTransformHandler = () => {
     setIsTransforming(true);
 
@@ -113,7 +113,7 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
     setNewTransformation(null);
 
     startTransition(async () => {
-      // await updateCredits(userId, creditFee)
+      await updateCredits(userId, -1)
     })
   }
 
