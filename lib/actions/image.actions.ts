@@ -5,6 +5,13 @@ import { connectToDatabase } from "../database/mongoose"
 import { handleError } from "../utils"
 import User from "../database/models/user.model";
 import Image from "../database/models/image.model";
+import { redirect } from "next/navigation";
+
+const populateUser = (query: any) => query.populate({
+    path: 'author',
+    model: User,
+    select: '_id firstName lastName'
+})
 
 // Add image to DB
 export async function addImage({image, userId, path}: AddImageParams) {
@@ -37,26 +44,39 @@ export async function updateImage({image, userId, path}: UpdateImageParams) {
     try {
         await connectToDatabase();
 
+        const imageToUpdate = await Image.findById(image._id);
+
+        if (!imageToUpdate || imageToUpdate.author.toHexString() !== userId) {
+            throw new Error("Unauthorized or image not found")
+        }
+
+        const updatedImage = await Image.findByIdAndUpdate(
+            imageToUpdate._id,
+            image,
+            {new: true}
+        )
+
         // Allow us to show new image that was created
         revalidatePath(path)
 
-        return JSON.parse(JSON.stringify(image))
+        return JSON.parse(JSON.stringify(updatedImage))
     } catch (error) {
         handleError(error)
     }
 }
 
 // Delete image
-export async function deleteImage(imageid: string) {
+export async function deleteImage(imageId: string) {
     try {
         await connectToDatabase();
 
-        // Allow us to show new image that was created
-        revalidatePath(path)
+        // Delete the image
+        await Image.findByIdAndDelete(imageId)
 
-        return JSON.parse(JSON.stringify(image))
     } catch (error) {
         handleError(error)
+    } finally {
+        redirect('/')
     }
 }
 
@@ -64,6 +84,8 @@ export async function deleteImage(imageid: string) {
 export async function getImageById(imageId: string) {
     try {
         await connectToDatabase();
+
+        const image = await populateUser(Image.findById(imageId))
 
         // Allow us to show new image that was created
         revalidatePath(path)
