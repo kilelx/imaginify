@@ -5,14 +5,19 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { aspectRatioOptions, creditFee, defaultValues, transformationTypes } from "@/constants";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select"
+  aspectRatioOptions,
+  creditFee,
+  defaultValues,
+  transformationTypes,
+} from "@/constants";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { CustomField } from "./CustomField";
 import { useState, useTransition } from "react";
@@ -21,6 +26,8 @@ import { Button } from "../ui/button";
 import { updateCredits } from "@/lib/actions/user.actions";
 import MediaUploader from "./MediaUploader";
 import TransformedImage from "./TransformedImage";
+import { getCldImageUrl } from "next-cloudinary";
+import { addImage } from "@/lib/actions/image.actions";
 
 export const formSchema = z.object({
   title: z.string(),
@@ -30,16 +37,23 @@ export const formSchema = z.object({
   publicId: z.string(),
 });
 
-function TransformationForm({ action, data = null, userId, type, creditBalance, config = null }: TransformationFormProps) {
-
-    const transformationType = transformationTypes[type];
-    const [image, setImage] = useState(data)
-    // Keep track of transformation, type Transformations or null
-    const [newTransformation, setNewTransformation] = useState<Transformations | null>(null)
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isTransforming, setIsTransforming] = useState(false);
-    const [transformationConfig, setTransformationConfig] = useState(config);
-    const [isPending, startTransition] = useTransition();
+function TransformationForm({
+  action,
+  data = null,
+  userId,
+  type,
+  creditBalance,
+  config = null,
+}: TransformationFormProps) {
+  const transformationType = transformationTypes[type];
+  const [image, setImage] = useState(data);
+  // Keep track of transformation, type Transformations or null
+  const [newTransformation, setNewTransformation] =
+    useState<Transformations | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTransforming, setIsTransforming] = useState(false);
+  const [transformationConfig, setTransformationConfig] = useState(config);
+  const [isPending, startTransition] = useTransition();
 
   // If we have already filled the data before
   const initialValues =
@@ -63,27 +77,70 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    setIsSubmitting(true);
+
+    if (data || image) {
+      const transformationUrl = getCldImageUrl({
+        width: image?.width,
+        height: image?.height,
+        src: image?.publicId,
+        ...transformationConfig,
+      });
+
+      const imageData = {
+        title: values.title,
+        publicId: image?.publicId,
+        transformationType: type,
+        width: image?.width,
+        height: image?.height,
+        config: transformationConfig,
+        secureUrl: image?.secureUrl,
+        transformationUrl,
+        aspectRatio: values.aspectRatio,
+        prompt: values.prompt,
+        color: values.color,
+      };
+
+      if (action === "Add") {
+        try {
+          const newImage = await addImage({
+            image: imageData,
+            userId,
+            path: '/'
+          });
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }
   }
 
   // onChangeField: function with a parameter (value) that returns nothing
-  const onSelectFieldHandler = (value: string, onChangeField: (value: string) => void) => {
+  const onSelectFieldHandler = (
+    value: string,
+    onChangeField: (value: string) => void
+  ) => {
     // Get the image size
-    const imageSize = aspectRatioOptions[value as AspectRatioKey]
+    const imageSize = aspectRatioOptions[value as AspectRatioKey];
 
     setImage((prevState: any) => ({
       ...prevState,
       aspectRatio: imageSize.aspectRatio,
       width: imageSize.width,
       height: imageSize.height,
-    }))
+    }));
 
     setNewTransformation(transformationType.config);
 
     return onChangeField(value);
-  }
+  };
 
-  const onInputChangeHandler = (fieldName: string, value: string, type: string, onChangeField:(value: string) => void) => {
+  const onInputChangeHandler = (
+    fieldName: string,
+    value: string,
+    type: string,
+    onChangeField: (value: string) => void
+  ) => {
     // debounce() is imported from /utils
     //I It waits 1000ms, and then submit the new value
     debounce(() => {
@@ -94,12 +151,12 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
           // Spread all the properties
           ...prevState?.[type],
           // We use this expression to get a dynamic key
-          [fieldName === 'prompt' ? 'prompt' : 'to']: value
-        }
-      }))
-      return onChangeField(value)
-    }, 1000)
-  }
+          [fieldName === "prompt" ? "prompt" : "to"]: value,
+        },
+      }));
+      return onChangeField(value);
+    }, 1000);
+  };
 
   // TODO: update creditfee to something else
   const onTransformHandler = () => {
@@ -108,14 +165,14 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
     setTransformationConfig(
       // Merge all the keys of the object to ensure they endup in a new object
       deepMergeObjects(newTransformation, transformationConfig)
-    )
+    );
 
     setNewTransformation(null);
 
     startTransition(async () => {
-      await updateCredits(userId, -1)
-    })
-  }
+      await updateCredits(userId, -1);
+    });
+  };
 
   return (
     <Form {...form}>
@@ -128,76 +185,78 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
           // We destructure the field, and then pass the rest of the props
           render={({ field }) => <Input {...field} className="input-field" />}
         />
-        {type === 'fill' &&
-            <CustomField
-              control={form.control}
-              name="aspectRatio"
-              formLabel="aspectRatio"
-              className="w-full"
-              render={({field}) => (
-                <Select
-                  onValueChange={(value) => onSelectFieldHandler(value, field.onChange)}
-                >
-                  <SelectTrigger className="select-field">
-                    <SelectValue placeholder="Select size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {/* Get the aspectRatioOptions in constants */}
-                    {Object.keys(aspectRatioOptions).map((key) => (
-                      <SelectItem
-                        key={key}
-                        value={key}
-                        className="select-item"
-                      >
-                        {/* The compiler will assume it's a type AspectRatioKey */}
-                        {aspectRatioOptions[key as AspectRatioKey].label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-        }
+        {type === "fill" && (
+          <CustomField
+            control={form.control}
+            name="aspectRatio"
+            formLabel="aspectRatio"
+            className="w-full"
+            render={({ field }) => (
+              <Select
+                onValueChange={(value) =>
+                  onSelectFieldHandler(value, field.onChange)
+                }
+              >
+                <SelectTrigger className="select-field">
+                  <SelectValue placeholder="Select size" />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Get the aspectRatioOptions in constants */}
+                  {Object.keys(aspectRatioOptions).map((key) => (
+                    <SelectItem key={key} value={key} className="select-item">
+                      {/* The compiler will assume it's a type AspectRatioKey */}
+                      {aspectRatioOptions[key as AspectRatioKey].label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        )}
 
-        {(type === 'remove' || type === 'recolor') && (
+        {(type === "remove" || type === "recolor") && (
           <div className="prompt-field">
             <CustomField
               control={form.control}
               name="prompt"
               formLabel={
-                type==='remove' ? 'Object to remove' : 'Object to recolor'
+                type === "remove" ? "Object to remove" : "Object to recolor"
               }
               className="w-full"
-              render={({field}) => (
+              render={({ field }) => (
                 <Input
                   value={field.value}
                   className="input-field"
-                  onChange={(e) => onInputChangeHandler(
-                    'prompt',
-                    e.target.value,
-                    type,
-                    field.onChange
-                  )}
+                  onChange={(e) =>
+                    onInputChangeHandler(
+                      "prompt",
+                      e.target.value,
+                      type,
+                      field.onChange
+                    )
+                  }
                 />
               )}
             />
 
-            {type === 'recolor' && (
+            {type === "recolor" && (
               <CustomField
                 control={form.control}
                 name="color"
                 formLabel="Replacement color"
                 className="w-full"
-                render={({field}) => (
+                render={({ field }) => (
                   <Input
                     value={field.value}
                     className="input-field"
-                    onChange={(e) => onInputChangeHandler(
-                      'color',
-                      e.target.value,
-                      'recolor',
-                      field.onChange
-                    )}
+                    onChange={(e) =>
+                      onInputChangeHandler(
+                        "color",
+                        e.target.value,
+                        "recolor",
+                        field.onChange
+                      )
+                    }
                   />
                 )}
               />
@@ -210,7 +269,7 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
             control={form.control}
             name="publicId"
             className="flex size-full flex-col"
-            render={({field}) => (
+            render={({ field }) => (
               <MediaUploader
                 onValueChange={field.onChange}
                 setImage={setImage}
@@ -230,24 +289,24 @@ function TransformationForm({ action, data = null, userId, type, creditBalance, 
           />
         </div>
 
-      <div className="flex flex-col gap-4">
-        <Button
-          type="button"
-          className="submit-button capitalize"
-          disabled={isTransforming || newTransformation === null}
-          onClick={onTransformHandler}
-        >
-          {isTransforming ? 'Transforming...' : 'Apply transformation'}
-        </Button>
+        <div className="flex flex-col gap-4">
+          <Button
+            type="button"
+            className="submit-button capitalize"
+            disabled={isTransforming || newTransformation === null}
+            onClick={onTransformHandler}
+          >
+            {isTransforming ? "Transforming..." : "Apply transformation"}
+          </Button>
 
-        <Button
-          type="submit"
-          className="submit-button capitalize"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Submitting' : 'Save image'}
-        </Button>
-      </div>
+          <Button
+            type="submit"
+            className="submit-button capitalize"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Submitting" : "Save image"}
+          </Button>
+        </div>
       </form>
     </Form>
   );
