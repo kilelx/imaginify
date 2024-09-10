@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 
 import { CustomField } from "./CustomField";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { AspectRatioKey, debounce, deepMergeObjects } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { updateCredits } from "@/lib/actions/user.actions";
@@ -203,6 +203,13 @@ function TransformationForm({
       await updateCredits(userId, creditFee);
     });
   };
+
+  // We need to use this useEffect to be able to click on 'Apply transformation' even if all the fields of 'Generative fill' or not filled
+  useEffect(() => {
+    if(image && (type === 'restore' || type === 'removeBackground')) {
+      setNewTransformation(transformationType.config)
+    }
+  }, [image, transformationType.config, type])
 
   return (
     <Form {...form}>
